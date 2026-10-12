@@ -1,7 +1,7 @@
 // DATOS --->
 // NOMBRE: SILVETTI MANCILLA EDDY KALED
 
-const API_KEY = '19a3b510019cd9d12cbbec7810e80f9c'; 
+const API_KEY = '19a3b510019cd9d12cbbec7810e80f9c';
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_URL = 'https://image.tmdb.org/t/p/w500';
 const LANGUAGE = 'es-ES';
@@ -100,18 +100,7 @@ async function cargarPopulares() {
 
         ocultarLoading();
     } catch (error) {
-        if (error.name === 'AbortError') return;
-
-        if (
-            error.message.includes('401') ||
-            error.message === 'Api key invalida'
-        ) {
-            mostrarError('Api key invalida');
-        } else if (error instanceof TypeError) {
-            mostrarError('Error de conexión');
-        } else {
-            mostrarError(error.message);
-        }
+        mostrarError(obtenerMensajeError(error));   
     }
 }
 
@@ -210,13 +199,10 @@ async function buscarSeries(texto) {
         renderizarSeries(datos.results);
 
         ocultarLoading();
+        
     } catch (error) {
-        if (error instanceof TypeError) {
-            mostrarError('Error de conexión');
-        } else {
-            mostrarError(error.message);
-        }
-    }
+    mostrarError(obtenerMensajeError(error));
+    }   
 }
 
 let temporizadorBusqueda;
@@ -332,5 +318,35 @@ modalOverlay.addEventListener('click', () => {
 document.addEventListener('keydown', (evento) => {
     if (evento.key === 'Escape') {
         modal.classList.remove('modal--show');
+    }
+});
+
+// 5. Manejo de errores 
+
+function obtenerMensajeError(error) {
+    if (
+        error.message.includes('401') ||
+        error.message === 'Api key invalida'
+    ) {
+        return 'Api key invalida';
+    }
+
+    if (
+        error instanceof TypeError ||
+        error.message === 'Failed to fetch'
+    ) {
+        return 'Error de conexión';
+    }
+
+    return 'Ha ocurrido un error. Inténtalo de nuevo.';
+}
+
+retryBtn.addEventListener('click', () => {
+    const consulta = searchInput.value.trim();
+
+    if (consulta) {
+        buscarSeries(consulta);
+    } else {
+        cargarPopulares();
     }
 });
