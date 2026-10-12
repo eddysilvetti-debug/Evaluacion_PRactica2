@@ -93,7 +93,7 @@ async function cargarPopulares() {
         resultsCount.textContent =
             `${datos.results.length} series encontradas`;
 
-       console.log('Series populares recibidas:', datos.results);
+       renderizarSeries(datos.results);
 
         ocultarLoading();
     } catch (error) {
@@ -113,3 +113,54 @@ async function cargarPopulares() {
 }
 
 cargarPopulares();
+
+function renderizarSeries(series) {
+    seriesGrid.innerHTML = '';
+
+    series.forEach((serie) => {
+        const tarjeta = document.createElement('article');
+        tarjeta.className = 'serie-card';
+
+        const poster = document.createElement('div');
+        poster.className = 'serie-card__poster';
+
+        if (serie.poster_path) {
+            const imagen = document.createElement('img');
+
+            imagen.className = 'serie-card__image';
+            imagen.src = `${IMAGE_URL}${serie.poster_path}`;
+            imagen.alt = `Póster de ${serie.name}`;
+            imagen.loading = 'lazy';
+
+            poster.appendChild(imagen);
+        } else {
+            poster.textContent = 'Imagen no disponible';
+        }
+
+        const rating = document.createElement('span');
+        rating.className = 'serie-card__rating';
+        rating.textContent =
+            `⭐ ${Number(serie.vote_average || 0).toFixed(1)}`;
+
+        poster.appendChild(rating);
+
+        const contenido = document.createElement('div');
+        contenido.className = 'serie-card__content';
+
+        const titulo = document.createElement('h3');
+        titulo.className = 'serie-card__title';
+        titulo.textContent = serie.name || 'Sin título';
+
+        const anio = document.createElement('p');
+        anio.className = 'serie-card__year';
+        anio.textContent = serie.first_air_date
+            ? `Año: ${serie.first_air_date.substring(0, 4)}`
+            : 'Año desconocido';
+
+        contenido.append(titulo, anio);
+        tarjeta.append(poster, contenido);
+
+        seriesGrid.appendChild(tarjeta);
+    });
+}
+
