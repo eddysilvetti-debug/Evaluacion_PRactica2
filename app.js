@@ -1,3 +1,6 @@
+// DATOS --->
+// NOMBRE: SILVETTI MANCILLA EDDY KALED
+
 const API_KEY = '19a3b510019cd9d12cbbec7810e80f9c'; 
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_URL = 'https://image.tmdb.org/t/p/w500';
@@ -123,6 +126,10 @@ function renderizarSeries(series) {
         const tarjeta = document.createElement('article');
         tarjeta.className = 'serie-card';
 
+        tarjeta.addEventListener('click', () => {
+            mostrarDetalle(serie.id);
+        });
+
         const poster = document.createElement('div');
         poster.className = 'serie-card__poster';
 
@@ -234,4 +241,96 @@ clearBtn.addEventListener('click', () => {
 
     searchInput.value = '';
     cargarPopulares();
+});
+
+// 4. Modal de detalle
+
+async function mostrarDetalle(id) {
+    modalBody.innerHTML = '<p>Cargando detalles...</p>';
+    modal.classList.add('modal--show');
+
+    try {
+        const respuesta = await fetch(
+            `${BASE_URL}/tv/${id}?api_key=${API_KEY}&language=es-ES`
+        );
+
+        if (respuesta.status === 401) {
+            throw new Error('Api key invalida');
+        }
+
+        if (!respuesta.ok) {
+            throw new Error(`Error HTTP ${respuesta.status}`);
+        }
+
+        const serie = await respuesta.json();
+
+        const generos = serie.genres.length
+            ? serie.genres.map(genero => genero.name).join(', ')
+            : 'No disponibles';
+
+        modalBody.innerHTML = '';
+
+        const titulo = document.createElement('h2');
+        titulo.className = 'modal__title';
+        titulo.textContent = serie.name;
+
+        const subtitulo = document.createElement('p');
+        subtitulo.className = 'modal__subtitle';
+        subtitulo.textContent = serie.first_air_date
+            ? `Estreno: ${serie.first_air_date}`
+            : 'Fecha de estreno desconocida';
+
+        const informacion = document.createElement('div');
+        informacion.className = 'modal__info';
+
+        const temporadas = document.createElement('span');
+        temporadas.textContent =
+            `Temporadas: ${serie.number_of_seasons}`;
+
+        const episodios = document.createElement('span');
+        episodios.textContent =
+            `Episodios: ${serie.number_of_episodes}`;
+
+        const estado = document.createElement('span');
+        estado.textContent = `Estado: ${serie.status || 'Desconocido'}`;
+
+        const generosTexto = document.createElement('p');
+        generosTexto.textContent = `Géneros: ${generos}`;
+
+        informacion.append(temporadas, episodios, estado);
+
+        const sinopsis = document.createElement('p');
+        sinopsis.className = 'modal__overview';
+        sinopsis.textContent =
+            serie.overview || 'Sin sinopsis disponible.';
+
+        modalBody.append(
+            titulo,
+            subtitulo,
+            informacion,
+            generosTexto,
+            sinopsis
+        );
+    } catch (error) {
+        modalBody.textContent =
+            error.message.includes('401')
+                ? 'Api key invalida'
+                : error instanceof TypeError
+                    ? 'Error de conexión'
+                    : error.message;
+    }
+}
+
+modalClose.addEventListener('click', () => {
+    modal.classList.remove('modal--show');
+});
+
+modalOverlay.addEventListener('click', () => {
+    modal.classList.remove('modal--show');
+});
+
+document.addEventListener('keydown', (evento) => {
+    if (evento.key === 'Escape') {
+        modal.classList.remove('modal--show');
+    }
 });
