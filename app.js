@@ -114,6 +114,8 @@ async function cargarPopulares() {
 
 cargarPopulares();
 
+//2. Tarjeta de Serie
+
 function renderizarSeries(series) {
     seriesGrid.innerHTML = '';
 
@@ -164,3 +166,72 @@ function renderizarSeries(series) {
     });
 }
 
+
+// 3. Busqueda
+
+async function buscarSeries(texto) {
+    const consulta = texto.trim();
+
+    if (!consulta) {
+        await cargarPopulares();
+        return;
+    }
+
+    mostrarLoading();
+
+    try {
+        const query = encodeURIComponent(consulta);
+
+        const respuesta = await fetch(
+            `${BASE_URL}/search/tv?api_key=${API_KEY}&query=${query}&language=es-ES`
+        );
+
+        if (respuesta.status === 401) {
+            throw new Error('Api key invalida');
+        }
+
+        if (!respuesta.ok) {
+            throw new Error(`Error HTTP ${respuesta.status}`);
+        }
+
+        const datos = await respuesta.json();
+
+        resultsTitle.textContent = `Resultados para "${consulta}"`;
+        resultsCount.textContent =
+            `${datos.results.length} series encontradas`;
+
+        renderizarSeries(datos.results);
+
+        ocultarLoading();
+    } catch (error) {
+        if (error instanceof TypeError) {
+            mostrarError('Error de conexión');
+        } else {
+            mostrarError(error.message);
+        }
+    }
+}
+
+let temporizadorBusqueda;
+
+searchInput.addEventListener('input', () => {
+    clearTimeout(temporizadorBusqueda);
+
+    const texto = searchInput.value.trim();
+
+    if (!texto) {
+        cargarPopulares();
+        return;
+    }
+
+    temporizadorBusqueda = setTimeout(() => {
+        buscarSeries(texto);
+    }, 400);
+});
+
+clearBtn.addEventListener('click', () => {
+    clearTimeout(temporizadorBusqueda);
+
+    searchInput.value = '';
+    cargarPopulares();
+});
